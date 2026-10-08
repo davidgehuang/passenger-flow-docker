@@ -1,0 +1,60 @@
+services:
+  db:
+    # 固定本轮验收镜像；升级时更新摘要并重新验收，不静默改变旧卷引擎。
+    image: mysql:8.0@sha256:a532724022429812ec797c285c1b540a644c15e248579c6bfdf12a8fbaab4964
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:?DB_NAME required}
+      MYSQL_USER: ${DB_USER:?DB_USER required}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD required}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD required}
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql --protocol=TCP -h127.0.0.1 -u\"$$MYSQL_USER\" \"$$MYSQL_DATABASE\" --connect-timeout=3 -N -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      args:
+        GIT_COMMIT: local
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      CONTAINER_RUNTIME: "true"
+      BIND_HOST: 0.0.0.0
+      PORT: "3030"
+      APP_ENV_NAME: LOCAL
+      APP_AUTH_USER: ${APP_AUTH_USER:?APP_AUTH_USER required}
+      APP_AUTH_PASSWORD: ${APP_AUTH_PASSWORD:?APP_AUTH_PASSWORD required}
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: ${DB_NAME:?DB_NAME required}
+      DB_USER: ${DB_USER:?DB_USER required}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD required}
+      DB_TIME_ZONE: "+08:00"
+      DB_CONNECTION_LIMIT: "5"
+      AUTO_INIT_SCHEMA: "true"
+      SEED_DEMO_DATA: "true"
+      ENABLE_CONTINUOUS_WORKLOAD: "false"
+    ports:
+      - "127.0.0.1:${APP_HTTP_PORT:-3030}:3030"
+    healthcheck:
+      test: ["CMD", "node", "scripts/container-health.js"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 6
+    init: true
+    stop_grace_period: 45s
+    restart: unless-stopped
+
+volumes:
+  mysql_data:

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <%- include('partials/nav') %>
+  <%- include('partials/maintenanceBanner') %>
+
+  <div class="container-fluid py-4">
+    <h4 class="mb-3"><i class="bi bi-database-check"></i> Migration Check - 数据库迁移检查</h4>
+
+    <%- include('partials/databaseStorage') %>
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-info-circle"></i> 数据库环境信息</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-3"><div class="p-2 border rounded bg-light">
+            <div class="text-muted small">Environment</div>
+            <div class="fw-bold"><%- include('partials/envBadge') %></div>
+          </div></div>
+          <div class="col-md-3"><div class="p-2 border rounded bg-light">
+            <div class="text-muted small">Masked DB Host</div>
+            <div class="fw-bold"><code><%= info.maskedHost %></code></div>
+          </div></div>
+          <div class="col-md-3"><div class="p-2 border rounded bg-light">
+            <div class="text-muted small">MySQL Version</div>
+            <div class="fw-bold"><%= info.dbVersion || 'N/A' %></div>
+          </div></div>
+          <div class="col-md-3"><div class="p-2 border rounded bg-light">
+            <div class="fw-bold"><%= info.database %></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><i class="bi bi-table"></i> 表级统计（information_schema）</div>
+      <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Table Name</th><th class="text-end">Approx. Rows</th><th class="text-end">Data Size (MiB)</th>
+              <th class="text-end">Index Size (MiB)</th><th class="text-end">Data Free (MiB)</th><th class="text-end">Total Size (MiB)</th>
+            </tr>
+          </thead>
+          <tbody id="storage-table-body">
+            <% tables.forEach(t => { %>
+              <tr>
+                <td><code><%= t.name %></code></td>
+                <td class="text-end"><%= t.rowsApprox %></td>
+                <td class="text-end"><%= t.dataSizeMB %></td>
+                <td class="text-end"><%= t.indexSizeMB %></td>
+                <td class="text-end"><%= t.dataFreeMB %></td>
+                <td class="text-end fw-semibold"><%= t.totalSizeMB %></td>
+              </tr>
+            <% }) %>
+            <% if (!tables.length) { %>
+              <tr><td colspan="6" class="text-center text-muted py-4">暂无表统计信息</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer text-muted small">
+        容量为存储引擎估算；表中行数为近似值，上方卡片为八张业务表精确行数。
+      </div>
+    </div>
+  </div>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

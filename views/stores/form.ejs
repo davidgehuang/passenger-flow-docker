@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body>
+  <%- include('../partials/nav') %>
+  <%- include('../partials/maintenanceBanner') %>
+
+  <div class="container py-4" style="max-width: 860px;">
+    <h4 class="mb-3">
+      <i class="bi bi-pencil-square"></i>
+      <%= store ? '编辑门店：' + store.store_name : '新增门店' %>
+    </h4>
+
+    <% if (error) { %>
+      <div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> <%= error %></div>
+    <% } %>
+    <% if (maintenanceMode) { %>
+      <div class="alert alert-warning">当前处于只读维护模式，提交将被拒绝。</div>
+    <% } %>
+
+    <div class="card"><div class="card-body">
+      <form method="post" action="<%= action %>">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">门店编码 <span class="text-danger">*</span></label>
+            <input class="form-control" name="store_code" value="<%= store ? store.store_code : '' %>" required>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">门店名称 <span class="text-danger">*</span></label>
+            <input class="form-control" name="store_name" value="<%= store ? store.store_name : '' %>" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">区域</label>
+            <input class="form-control" name="region" value="<%= store ? store.region : '' %>" placeholder="华北">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">城市</label>
+            <input class="form-control" name="city" value="<%= store ? store.city : '' %>" placeholder="北京">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">地址</label>
+            <input class="form-control" name="address" value="<%= store ? store.address : '' %>">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">业态</label>
+            <input class="form-control" name="business_type" value="<%= store ? store.business_type : '' %>" placeholder="标准超市">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">开业日期</label>
+            <input type="date" class="form-control" name="opening_date" value="<%= store && store.opening_date ? store.opening_date : '' %>">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">状态</label>
+            <select class="form-select" name="status">
+              <% ['ACTIVE', 'MAINTENANCE', 'CLOSED'].forEach(s => { %>
+                <option value="<%= s %>" <%= store && store.status === s ? 'selected' : '' %>><%= s %></option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+          <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> 保存</button>
+          <a href="/stores" class="btn btn-outline-secondary">返回列表</a>
+        </div>
+      </form>
+    </div></div>
+  </div>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

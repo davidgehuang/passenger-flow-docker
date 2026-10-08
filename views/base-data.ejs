@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><%- include('partials/head') %></head>
+<body>
+<%- include('partials/nav') %>
+<%- include('partials/maintenanceBanner') %>
+<main class="container py-4" style="max-width:960px">
+  <h3>基础资料初始化／扩容</h3>
+  <p>5 家门店、10 台设备只是默认示例。这里创建模拟门店和设备，不生成客流，不覆盖已有资料。仅在允许写入的源端执行。</p>
+  <form id="base-form" class="card card-body gap-3">
+    <label>操作方式<select id="mode" class="form-select"><option value="ensure">补齐：达到目标门店数，每店至少指定设备数</option><option value="append">追加：新增门店及配套设备</option><option value="devices">追加：为选定门店增加设备</option></select></label>
+    <label id="stores-label">门店数量（补齐为目标数量；追加为新增数量）<input id="stores" type="number" min="1" max="500" value="50" class="form-control"></label>
+    <label id="selected-label" hidden>选择已有门店（可多选）<select id="selected" multiple size="8" class="form-select"><% stores.forEach(s=>{ %><option value="<%= s.store_id %>"><%= s.store_code %> · <%= s.store_name %>（<%= s.status %>）</option><% }) %></select></label>
+    <label>每店设备数（补齐为至少数量；追加为新增数量）<input id="per-store" type="number" min="1" max="100" value="4" required class="form-control"></label>
+    <p class="text-muted mb-0">批量工具范围：完成后最多 500 家门店、5,000 台设备。关闭门店和停用设备也计入数量；不足时补充，超出目标的已有资料保留。</p>
+    <button id="preview" type="submit" class="btn btn-outline-primary">只读预览</button>
+    <button id="execute" type="button" class="btn btn-primary" disabled>确认执行预览结果</button>
+    <button id="new-batch" type="button" class="btn btn-outline-secondary">开始新批次</button>
+  </form>
+  <p id="base-status" role="status" class="mt-3"></p>
+  <pre id="base-result" class="bg-light p-3" style="white-space:pre-wrap"></pre>
+  <p><a href="/stores">查看门店</a> · <a href="/devices">查看设备</a> · <a href="/migration-lab">生成客流</a></p>
+</main>
+<script src="/js/base-data.js" defer></script>
+<%- include('partials/footer') %>
+</body></html>

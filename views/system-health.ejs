@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <%- include('partials/nav') %>
+  <%- include('partials/maintenanceBanner') %>
+
+  <div class="container py-4" style="max-width: 720px;">
+    <h4 class="mb-3"><i class="bi bi-heart-pulse"></i> System Health</h4>
+
+    <div class="card mb-3">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small">API Endpoint</div>
+          <code>GET /health</code>
+        </div>
+        <button class="btn btn-primary btn-sm" id="btn-refresh"><i class="bi bi-arrow-clockwise"></i> 刷新</button>
+      </div>
+    </div>
+
+    <div class="card"><div class="card-body">
+      <pre id="health-result" class="mb-0 small">加载中...</pre>
+    </div></div>
+
+    <div class="card mt-3"><div class="card-body">
+      <div class="text-muted small mb-1">Masked DB Host（来源 .env，敏感信息永不显示）</div>
+      <code><%= dbInfo.maskedHost %></code>
+    </div></div>
+  </div>
+
+  <%- include('partials/footer') %>
+  <script>
+    async function loadHealth() {
+      const el = document.getElementById('health-result');
+      try {
+        const res = await fetch('/health');
+        el.textContent = JSON.stringify(await res.json(), null, 2);
+      } catch (err) {
+        el.textContent = '请求失败: ' + err.message;
+      }
+    }
+    document.getElementById('btn-refresh').addEventListener('click', loadHealth);
+    loadHealth();
+    setInterval(loadHealth, 10000);
+  </script>
+</body>
+</html>

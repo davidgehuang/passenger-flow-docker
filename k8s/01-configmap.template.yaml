@@ -1,0 +1,24 @@
+# 复制到不纳入 Git 的 *.local.yaml，替换私网数据库地址后再应用。
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: passenger-flow-config
+  namespace: bh-lab
+data:
+  NODE_ENV: "production"
+  CONTAINER_RUNTIME: "true"
+  BIND_HOST: "0.0.0.0"
+  PORT: "3030"
+  REPORTS_DIR: "/tmp/passenger-flow-reports"
+  APP_ENV_NAME: "TENCENT"
+  DB_HOST: "REPLACE_TENCENTDB_PRIVATE_HOST"
+  DB_PORT: "3306"
+  DB_NAME: "passenger_flow_codex"
+  DB_CONNECTION_LIMIT: "5"
+  DB_TIME_ZONE: "+08:00"
+  DB_SSL: "false"
+  AUTO_INIT_SCHEMA: "false"
+  SEED_DEMO_DATA: "false"
+  ENABLE_CONTINUOUS_WORKLOAD: "false"
+  MAINTENANCE_MODE: "false"
+  DB_READ_ONLY: "false"

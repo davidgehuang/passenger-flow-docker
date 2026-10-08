@@ -1,0 +1,46 @@
+# 仅新建源库且已创建数据库/账号时执行一次；DTS 目标库不得运行。
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: passenger-flow-db-init-
+  namespace: bh-lab
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      nodeSelector:
+        node.kubernetes.io/instance-type: eklet
+      tolerations:
+        - key: eks.tke.cloud.tencent.com/eklet
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: db-init
+          image: REPLACE_TCR_REGISTRY/passenger-flow/passenger-flow-app@sha256:REPLACE_DIGEST
+          command: ["node", "scripts/container-preflight.js"]
+          envFrom:
+            - configMapRef:
+                name: passenger-flow-config
+            - secretRef:
+                name: passenger-flow-secret
+          env:
+            - name: AUTO_INIT_SCHEMA
+              value: "true"
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault

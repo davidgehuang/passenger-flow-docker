@@ -1,0 +1,6 @@
+rocky_ami_id    = "ami-REPLACE_AFTER_PREFLIGHT"
+rocky_ami_owner = "REPLACE_OWNER"
+mysql_version  = "8.4.REPLACE"
+# 可选：DTS任务页面给出的来源CIDR，未填写时副本公网3306关闭
+dts_source_cidrs = []
+alarm_email     = ""

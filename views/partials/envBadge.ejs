@@ -1,0 +1,5 @@
+<%
+  // 环境徽章：AWS 蓝 / TENCENT 橙 / LOCAL 绿
+  const envBadgeClass = envName === 'AWS' ? 'text-bg-primary' : (envName === 'TENCENT' ? 'text-bg-warning' : 'text-bg-success');
+%>
+<span class="badge <%= envBadgeClass %> fs-6"><%= envName %></span>

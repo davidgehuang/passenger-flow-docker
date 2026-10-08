@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body>
+  <%- include('../partials/nav') %>
+  <%- include('../partials/maintenanceBanner') %>
+
+  <div class="container py-4" style="max-width: 860px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0"><i class="bi bi-shop"></i> <%= store.store_name %>
+        <% const stCls = store.status === 'ACTIVE' ? 'text-bg-success' : (store.status === 'MAINTENANCE' ? 'text-bg-warning' : 'text-bg-secondary'); %>
+        <span class="badge <%= stCls %>"><%= store.status %></span>
+      </h4>
+      <a class="btn btn-sm btn-outline-primary" href="/stores/<%= store.store_id %>/edit"><i class="bi bi-pencil"></i> 编辑</a>
+    </div>
+
+    <div class="card"><div class="card-body">
+      <table class="table table-borderless mb-0" style="max-width: 560px;">
+        <tr><th class="text-muted w-25">门店编码</th><td><code><%= store.store_code %></code></td></tr>
+        <tr><th class="text-muted">门店名称</th><td><%= store.store_name %></td></tr>
+        <tr><th class="text-muted">区域 / 城市</th><td><%= store.region %> / <%= store.city %></td></tr>
+        <tr><th class="text-muted">地址</th><td><%= store.address %></td></tr>
+        <tr><th class="text-muted">业态</th><td><%= store.business_type %></td></tr>
+        <tr><th class="text-muted">开业日期</th><td><%= store.opening_date || '-' %></td></tr>
+        <tr><th class="text-muted">创建时间</th><td><%= store.created_at %></td></tr>
+        <tr><th class="text-muted">更新时间</th><td><%= store.updated_at %></td></tr>
+      </table>
+    </div></div>
+
+    <div class="alert alert-info mt-3">今日事件 <%= store.today.events %> 条，进店 <%= store.today.in_people %> 人次，离店 <%= store.today.out_people %> 人次。<a href="/flow-events?storeId=<%= store.store_id %>">查看客流明细</a></div>
+    <a href="/stores" class="btn btn-outline-secondary mt-3">返回列表</a>
+    <form method="post" action="/stores/<%= store.store_id %>/delete" class="mt-3" onsubmit="return confirm('仅能删除没有关联记录的门店，确认删除？')"><button class="btn btn-outline-danger">删除门店</button></form>
+    <a href="/devices?storeId=<%= store.store_id %>" class="btn btn-outline-primary mt-3">查看该店设备</a>
+  </div>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

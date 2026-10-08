@@ -1,0 +1,17 @@
+[Unit]
+Description=Passenger Flow Docker App
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/passenger-flow-cloud
+ExecStart=/usr/bin/docker compose --project-name passenger-flow-cloud --env-file /etc/passenger-flow/deploy.env -f /opt/passenger-flow-cloud/compose.yaml up -d --wait --wait-timeout 180
+ExecStop=/usr/bin/docker compose --project-name passenger-flow-cloud --env-file /etc/passenger-flow/deploy.env -f /opt/passenger-flow-cloud/compose.yaml stop --timeout 45
+TimeoutStartSec=240
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target

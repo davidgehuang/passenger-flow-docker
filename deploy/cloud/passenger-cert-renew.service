@@ -1,0 +1,7 @@
+[Unit]
+Description=Renew Passenger Flow IP TLS certificate
+After=network-online.target nginx.service
+[Service]
+Type=oneshot
+ExecStart=/opt/passenger-certbot/bin/certbot renew --quiet --deploy-hook "/usr/sbin/nginx -t && /usr/bin/systemctl reload nginx"
+ExecStartPost=/opt/passenger-flow-cloud/check-certificate.sh

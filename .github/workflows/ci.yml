@@ -1,0 +1,24 @@
+name: Container CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+      - name: Build container image
+        run: docker build --build-arg GIT_COMMIT="${GITHUB_SHA}" -t passenger-flow:ci .

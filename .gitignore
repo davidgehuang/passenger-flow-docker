@@ -1,0 +1,60 @@
+# ---- Environment / secrets（绝对禁止上传） ----
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# ---- Dependencies ----
+node_modules/
+.npm-cache/
+*.local.yaml
+public/vendor/
+.local-mysql/
+.maintenance
+reports/
+.env.local
+artifacts/
+
+.git.backup-*/
+
+
+# ---- Logs ----
+logs/
+*.log
+npm-debug.log*
+
+# ---- Reports（生成物，可能含数据快照） ----
+reports/*.json
+
+# ---- Keys & certificates ----
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ---- Database dumps ----
+*.dump
+*.sql.gz
+*.bak
+
+# ---- OS / IDE ----
+.DS_Store
+.idea/
+.vscode/
+
+# ---- Test env ----
+
+# ---- Terraform / cloud secrets ----
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+!*.tfvars.json.example
+backend.hcl
+.cloud-local/
+crash.log
+crash.*.log
+__pycache__/

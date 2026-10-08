@@ -1,0 +1,26 @@
+# 仅在 TKE Prometheus 已安装 ServiceMonitor CRD 后应用；替换实际实例 ID。
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: passenger-flow
+  namespace: bh-lab
+  labels:
+    prom_id: REPLACE_PROMETHEUS_INSTANCE_ID
+spec:
+  namespaceSelector:
+    matchNames:
+      - bh-lab
+  selector:
+    matchLabels:
+      app: passenger-flow
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      basicAuth:
+        username:
+          name: passenger-flow-secret
+          key: APP_AUTH_USER
+        password:
+          name: passenger-flow-secret
+          key: APP_AUTH_PASSWORD

@@ -1,0 +1,9 @@
+zone           = "ap-hongkong-REPLACE"
+rocky_image_id = "img-REPLACE_AFTER_PREFLIGHT"
+instance_type  = "REPLACE_2CPU_4GB_TYPE"
+ssh_key_ids   = ["skey-REPLACE"]
+admin_cidrs   = ["REPLACE_YOUR_PUBLIC_IP/32"]
+dts_source_cidrs = []
+# 官方确认该地域/规格/版本支持TLS、且证书可验证端点后才能设置true。
+# 默认阻止付费创建，不通过升级规格或明文方式绕过。
+target_tls_verified = false

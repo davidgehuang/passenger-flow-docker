@@ -1,0 +1,29 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="/">
+      <i class="bi bi-people-fill text-info"></i> 客流管理系统
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="切换导航">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link <%= active === 'dashboard' ? 'active' : '' %>" href="/"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link <%= active === 'stores' ? 'active' : '' %>" href="/stores"><i class="bi bi-shop"></i> Stores</a></li>
+        <li class="nav-item"><a class="nav-link <%= active === 'devices' ? 'active' : '' %>" href="/devices"><i class="bi bi-camera-video"></i> Devices</a></li>
+        <li class="nav-item"><a class="nav-link <%= active === 'flow-events' ? 'active' : '' %>" href="/flow-events"><i class="bi bi-activity"></i> Flow Events</a></li>
+        <li class="nav-item"><a class="nav-link <%= active === 'migration-check' ? 'active' : '' %>" href="/migration-check"><i class="bi bi-database-check"></i> Migration Check</a></li>
+        <li class="nav-item"><a class="nav-link <%= active === 'migration-lab' ? 'active' : '' %>" href="/migration-lab"><i class="bi bi-arrow-left-right"></i> DTS Migration Lab</a></li>
+        <li class="nav-item"><a class="nav-link <%= active === 'system-health' ? 'active' : '' %>" href="/system-health"><i class="bi bi-heart-pulse"></i> System Health</a></li>
+      </ul>
+      <ul class="navbar-nav">
+        <li class="nav-item d-flex align-items-center gap-2">
+          <span class="text-white-50 small">环境</span>
+          <%- include('envBadge') %>
+          <span class="badge text-bg-secondary" title="Git Commit"><i class="bi bi-git"></i> <%= gitCommit %></span>
+          <span class="badge text-bg-light text-dark" title="应用版本"><%= appVersion %></span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

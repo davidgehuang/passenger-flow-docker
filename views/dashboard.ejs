@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <%- include('partials/nav') %>
+  <%- include('partials/maintenanceBanner') %>
+
+  <div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0"><i class="bi bi-speedometer2"></i> Dashboard</h4>
+      <div>
+        当前应用环境 <%- include('partials/envBadge') %>
+        <span class="badge <%= summary.database.status === 'UP' ? 'text-bg-success' : 'text-bg-danger' %> ms-1">
+          DB <%= summary.database.status %> <%= summary.database.version ? summary.database.version : '' %>
+        </span>
+      </div>
+    </div>
+
+    <p class="text-muted small">统计单位为人次，进店与离店合计不代表去重访客；今日净进店人数不等于实时在店人数。</p>
+    <%- include('partials/databaseStorage') %>
+    <!-- 统计卡片 -->
+    <div class="row g-3 mb-4" id="stat-cards">
+      <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body">
+        <div class="stat-label">今日总客流</div>
+        <div class="stat-value"><%= Number(summary.todayTotalPeople).toLocaleString('en-US') %></div>
+      </div></div></div>
+      <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body">
+        <div class="stat-label">今日进店人数</div>
+        <div class="stat-value text-success"><%= Number(summary.todayInPeople).toLocaleString('en-US') %></div>
+      </div></div></div>
+      <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body">
+        <div class="stat-label">今日离店人数</div>
+        <div class="stat-value text-danger"><%= Number(summary.todayOutPeople).toLocaleString('en-US') %></div>
+      </div></div></div>
+      <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body">
+        <div class="stat-label">今日净进店人数</div>
+        <div class="stat-value text-primary"><%= Number(summary.currentInStore).toLocaleString('en-US') %></div>
+      </div></div></div>
+      <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body">
+        <div class="stat-label">门店数量</div>
+        <div class="stat-value"><%= Number(summary.totalStores).toLocaleString('en-US') %></div>
+      </div></div></div>
+      <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body">
+        <div class="stat-label">在线设备 / 离线设备</div>
+        <div class="stat-value"><span class="text-success"><%= summary.onlineDevices %></span> / <span class="text-danger"><%= summary.offlineDevices %></span></div>
+      </div></div></div>
+      <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body">
+        <div class="stat-label">今日最繁忙门店</div>
+        <div class="stat-value fs-5"><%= summary.busiestStore %></div>
+        <div class="stat-sub"><%= Number(summary.busiestStorePeople).toLocaleString('en-US') %> 人次</div>
+      </div></div></div>
+      <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body">
+        <div class="stat-label">今日高峰时间</div>
+        <div class="stat-value fs-4"><%= summary.peakHour %></div>
+
+      </div></div></div>
+    </div>
+
+    <!-- 图表 -->
+    <div class="row g-3">
+      <div class="col-lg-8"><div class="card"><div class="card-header"><i class="bi bi-graph-up"></i> 最近 24 小时客流趋势</div>
+        <div class="card-body"><canvas id="chartTrend24h" height="90"></canvas></div></div></div>
+      <div class="col-lg-4"><div class="card"><div class="card-header"><i class="bi bi-pie-chart"></i> 设备在线率</div>
+        <div class="card-body"><canvas id="chartDevice" height="180"></canvas></div></div></div>
+      <div class="col-lg-6"><div class="card"><div class="card-header"><i class="bi bi-graph-up-arrow"></i> 最近 7 天客流趋势</div>
+        <div class="card-body"><canvas id="chartTrend7d" height="110"></canvas></div></div></div>
+      <div class="col-lg-6"><div class="card"><div class="card-header"><i class="bi bi-arrow-down-up"></i> IN / OUT 趋势（近 7 天）</div>
+        <div class="card-body"><canvas id="chartInOut" height="110"></canvas></div></div></div>
+      <div class="col-lg-6"><div class="card"><div class="card-header"><i class="bi bi-trophy"></i> TOP 10 门店（近 7 天）</div>
+        <div class="card-body"><canvas id="chartTop10" height="110"></canvas></div></div></div>
+      <div class="col-lg-6"><div class="card"><div class="card-header"><i class="bi bi-geo-alt"></i> 城市客流对比（近 7 天）</div>
+        <div class="card-body"><canvas id="chartCity" height="110"></canvas></div></div></div>
+    </div>
+  </div>
+
+  <%- include('partials/footer') %>
+
+  <script>
+    const chartsData = <%- chartsJson %>;
+    const palette = ['#0d6efd', '#dc3545', '#198754', '#ffc107', '#0dcaf0', '#6f42c1', '#fd7e14', '#20c997', '#d63384', '#495057'];
+
+    new Chart(document.getElementById('chartTrend24h'), {
+      type: 'line',
+      data: { labels: chartsData.trend24h.labels, datasets: [{ label: '客流人数', data: chartsData.trend24h.data, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,.12)', fill: true, tension: .3, pointRadius: 2 }] },
+      options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+    new Chart(document.getElementById('chartTrend7d'), {
+      type: 'bar',
+      data: { labels: chartsData.trend7d.labels, datasets: [{ label: '客流人数', data: chartsData.trend7d.data, backgroundColor: '#198754' }] },
+      options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+    new Chart(document.getElementById('chartInOut'), {
+      type: 'line',
+      data: { labels: chartsData.inOut.labels, datasets: [
+        { label: 'IN', data: chartsData.inOut.inData, borderColor: '#198754', tension: .3 },
+        { label: 'OUT', data: chartsData.inOut.outData, borderColor: '#dc3545', tension: .3 }
+      ]},
+      options: { responsive: true }
+    });
+    new Chart(document.getElementById('chartTop10'), {
+      type: 'bar',
+      data: { labels: chartsData.top10.labels, datasets: [{ label: '客流人数', data: chartsData.top10.data, backgroundColor: palette }] },
+      options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } } }
+    });
+    new Chart(document.getElementById('chartCity'), {
+      type: 'bar',
+      data: { labels: chartsData.city.labels, datasets: [{ label: '客流人数', data: chartsData.city.data, backgroundColor: '#0dcaf0' }] },
+      options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+    new Chart(document.getElementById('chartDevice'), {
+      type: 'doughnut',
+      data: { labels: chartsData.deviceStatus.labels, datasets: [{ data: chartsData.deviceStatus.data, backgroundColor: ['#198754', '#dc3545', '#ffc107', '#6c757d'] }] },
+      options: { responsive: true }
+    });
+  </script>
+</body>
+</html>

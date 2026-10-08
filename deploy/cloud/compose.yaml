@@ -1,0 +1,30 @@
+services:
+  app:
+    image: ${APP_IMAGE:?immutable image required}
+    env_file:
+      - path: /etc/passenger-flow/app.env
+        format: raw
+    ports:
+      - "127.0.0.1:3030:3030"
+    volumes:
+      - /etc/passenger-flow/db-ca.pem:/run/db-ca.pem:ro,Z
+      - /var/lib/passenger-flow/reports:/reports:Z
+    read_only: true
+    tmpfs:
+      - /tmp:uid=1000,gid=1000,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    init: true
+    stop_grace_period: 45s
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "scripts/container-health.js"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 6
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

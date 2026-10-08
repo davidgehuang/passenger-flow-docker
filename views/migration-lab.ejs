@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <%- include('partials/nav') %>
+  <%- include('partials/maintenanceBanner') %>
+
+  <!-- 破坏性操作警告（必需） -->
+  <div class="alert alert-danger mb-0 rounded-0 text-center fw-semibold">
+    <i class="bi bi-exclamation-octagon-fill"></i>
+    WARNING：此页面用于数据库迁移实验，包含破坏性数据库操作。
+  </div>
+
+  <div class="container-fluid py-4">
+    <h4 class="mb-3"><i class="bi bi-arrow-left-right"></i> 跨云数据库迁移实验控制台 / DTS Migration Lab</h4>
+
+    <%- include('partials/databaseStorage') %>
+    <% if (!overview.exactCounts || Number(overview.exactCounts.stores) === 0 || Number(overview.exactCounts.devices) === 0) { %>
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle-fill"></i>
+        当前数据库没有可用的门店和设备，无法生成客流事件。请先在项目目录运行
+        <code>npm run db:seed</code>，再执行 INSERT 或 Generate。
+      </div>
+    <% } %>
+
+    <!-- 环境信息 -->
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-info-circle"></i> Environment Overview</div>
+      <div class="card-body">
+        <div class="row g-2">
+          <div class="col-6 col-md-2"><div class="p-2 border rounded bg-light h-100">
+            <div class="text-muted small">Environment</div>
+            <div class="fw-bold"><%- include('partials/envBadge') %></div>
+          </div></div>
+          <div class="col-6 col-md-2"><div class="p-2 border rounded bg-light h-100">
+            <div class="text-muted small">App Version</div>
+            <div class="fw-bold"><%= appVersion %></div>
+          </div></div>
+          <div class="col-6 col-md-2"><div class="p-2 border rounded bg-light h-100">
+            <div class="text-muted small">Git Commit</div>
+            <div class="fw-bold"><code><%= gitCommit %></code></div>
+          </div></div>
+          <div class="col-6 col-md-2"><div class="p-2 border rounded bg-light h-100">
+            <div class="text-muted small">Masked DB Host</div>
+            <div class="fw-bold"><code><%= maskedHost %></code></div>
+          </div></div>
+          <div class="col-6 col-md-2"><div class="p-2 border rounded bg-light h-100">
+            <div class="text-muted small">MySQL Version</div>
+            <div class="fw-bold"><%= overview.dbVersion || 'N/A' %></div>
+          </div></div>
+          <div class="col-6 col-md-2"><div class="p-2 border rounded bg-light h-100">
+            <div class="text-muted small">Database</div>
+            <div class="fw-bold"><%= info.database %></div>
+          </div></div>
+          <div class="col-6 col-md-2"><div class="p-2 border rounded bg-light h-100">
+            <div class="text-muted small">Total Rows</div>
+            <div class="fw-bold" id="stat-total-rows">
+              <%= overview.exactCounts ? Object.values(overview.exactCounts).reduce((s, v) => s + Number(v), 0).toLocaleString('en-US') : '-' %>
+            </div>
+          </div></div>
+          <div class="col-6 col-md-2"><div class="p-2 border rounded bg-light h-100">
+            <div class="text-muted small">flow_events Rows</div>
+            <div class="fw-bold" id="stat-flow-rows"><%= overview.exactCounts ? Number(overview.exactCounts.flow_events).toLocaleString('en-US') : '-' %></div>
+          </div></div>
+          <div class="col-6 col-md-2"><div class="p-2 border rounded bg-light h-100">
+            <div class="text-muted small">device_status_logs Rows</div>
+            <div class="fw-bold" id="stat-log-rows"><%= overview.exactCounts ? Number(overview.exactCounts.device_status_logs).toLocaleString('en-US') : '-' %></div>
+          </div></div>
+          <div class="col-6 col-md-2"><div class="p-2 border rounded bg-light h-100">
+            <div class="text-muted small">migration_markers Rows</div>
+            <div class="fw-bold" id="stat-marker-rows"><%= overview.exactCounts ? Number(overview.exactCounts.migration_markers).toLocaleString('en-US') : '-' %></div>
+          </div></div>
+          <div class="col-6 col-md-2"><div class="p-2 border rounded bg-light h-100">
+            <div class="text-muted small">Current Batch / Last Op</div>
+            <div class="fw-bold small" id="stat-last-op"><%= overview.lastDbOp %></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Continuous Workload -->
+    <% if (workload.state === 'DISABLED') { %>
+      <div class="alert alert-warning">多副本容器部署已关闭进程内持续负载：两个 Pod 无法共享 Start/Stop 状态。请在独立 Job 中运行受控造数任务。</div>
+    <% } %>
+    <div class="card mb-3 border-warning">
+      <div class="card-header bg-warning bg-opacity-10"><i class="bi bi-play-circle"></i> Continuous Workload（持续业务负载 · 浏览器关闭后不会停止）</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-8">
+            <div class="row g-2 align-items-end">
+              <div class="col-6 col-md-2">
+                <label class="form-label small mb-1">QPS</label>
+                <input type="number" class="form-control form-control-sm" id="wl-qps" value="20" min="1" max="500">
+              </div>
+              <div class="col-6 col-md-2">
+                <label class="form-label small mb-1">INSERT %</label>
+                <input type="number" class="form-control form-control-sm" id="wl-insert" value="70" min="0" max="100">
+              </div>
+              <div class="col-6 col-md-2">
+                <label class="form-label small mb-1">UPDATE %</label>
+                <input type="number" class="form-control form-control-sm" id="wl-update" value="20" min="0" max="100">
+              </div>
+              <div class="col-6 col-md-2">
+                <label class="form-label small mb-1">DELETE %</label>
+                <input type="number" class="form-control form-control-sm" id="wl-delete" value="10" min="0" max="100">
+              </div>
+              <div class="col-12 col-md-4 d-flex gap-2">
+                <button class="btn btn-success btn-sm flex-fill" id="wl-start" <%= workload.state === 'DISABLED' ? 'disabled' : '' %>><i class="bi bi-play-fill"></i> Start</button>
+                <button class="btn btn-danger btn-sm flex-fill" id="wl-stop" <%= workload.state === 'DISABLED' ? 'disabled' : '' %>><i class="bi bi-stop-fill"></i> Stop</button>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-2 border rounded bg-light h-100">
+              <div class="d-flex justify-content-between">
+                <span class="text-muted small">Status</span>
+                <span id="wl-state" class="badge text-bg-secondary"><%= workload.state %></span>
+              </div>
+              <div class="small mt-1">QPS: <span id="wl-qps-cur">-</span> · Runtime: <span id="wl-runtime">-</span></div>
+              <div class="small">INSERT <span id="wl-insert-total" class="text-success">0</span> ·
+                  UPDATE <span id="wl-update-total" class="text-primary">0</span> ·
+                  DELETE <span id="wl-delete-total" class="text-danger">0</span></div>
+              <div class="small">Errors: <span id="wl-errors" class="text-danger">0</span> · Last Op: <span id="wl-last-op">-</span></div>
+              <div class="small">Last Marker: <span id="wl-last-marker">-</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <!-- INSERT 实验 -->
+      <div class="col-lg-4"><div class="card h-100">
+        <div class="card-header"><i class="bi bi-plus-circle text-success"></i> INSERT 动态实验</div>
+        <div class="card-body d-grid gap-2">
+          <button class="btn btn-outline-success btn-sm lab-btn" data-op="insert" data-rows="1000">INSERT 1,000 Rows</button>
+          <button class="btn btn-outline-success btn-sm lab-btn" data-op="insert" data-rows="10000">INSERT 10,000 Rows</button>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control" id="insert-custom" placeholder="Custom Rows" min="1" max="200000">
+            <button class="btn btn-success lab-btn" data-op="insert" data-custom="insert-custom">执行</button>
+          </div>
+          <hr class="my-1">
+          <button class="btn btn-outline-primary btn-sm lab-btn" data-op="generate" data-mb="10">Generate +10 MiB（逻辑负载）</button>
+          <button class="btn btn-outline-primary btn-sm lab-btn" data-op="generate" data-mb="50">Generate +50 MiB（逻辑负载）</button>
+          <button class="btn btn-outline-primary btn-sm lab-btn" data-op="generate" data-mb="100">Generate +100 MiB（逻辑负载）</button>
+          <button class="btn btn-outline-primary btn-sm lab-btn" data-op="generate" data-mb="200">Generate +200 MiB（逻辑负载）</button>
+          <div class="text-muted small">生成目标是写入 metadata 的逻辑负载；单批最多 200,000 行。RDS 整体磁盘请查看 CloudWatch FreeStorageSpace。</div>
+        </div>
+      </div></div>
+
+      <!-- UPDATE 实验 -->
+      <div class="col-lg-4"><div class="card h-100">
+        <div class="card-header"><i class="bi bi-arrow-repeat text-primary"></i> UPDATE 动态实验</div>
+        <div class="card-body d-grid gap-2">
+          <button class="btn btn-outline-primary btn-sm lab-btn" data-op="update" data-rows="1000">UPDATE 1,000 Rows</button>
+          <button class="btn btn-outline-primary btn-sm lab-btn" data-op="update" data-rows="10000">UPDATE 10,000 Rows</button>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control" id="update-custom" placeholder="Custom Rows" min="1" max="200000">
+            <button class="btn btn-primary lab-btn" data-op="update" data-custom="update-custom">执行</button>
+          </div>
+          <div class="text-muted small">真实修改 people_count / confidence / sensor_type / metadata / network_latency 等业务字段，保存 Before / After 样本。</div>
+        </div>
+      </div></div>
+
+      <!-- DELETE 实验 -->
+      <div class="col-lg-4"><div class="card h-100 border-danger-subtle">
+        <div class="card-header"><i class="bi bi-dash-circle text-danger"></i> DELETE 动态实验（破坏性）</div>
+        <div class="card-body d-grid gap-2">
+          <button class="btn btn-outline-danger btn-sm lab-btn" data-op="delete" data-rows="1000">DELETE 1,000 Rows</button>
+          <button class="btn btn-outline-danger btn-sm lab-btn" data-op="delete" data-rows="10000">DELETE 10,000 Rows</button>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control" id="delete-custom" placeholder="Custom Rows" min="1" max="200000">
+            <button class="btn btn-danger lab-btn" data-op="delete" data-custom="delete-custom">执行</button>
+          </div>
+          <hr class="my-1">
+          <button class="btn btn-outline-danger btn-sm lab-btn" data-op="purge" data-mb="10">Purge ~10MB</button>
+          <button class="btn btn-outline-danger btn-sm lab-btn" data-op="purge" data-mb="50">Purge ~50MB</button>
+          <button class="btn btn-outline-danger btn-sm lab-btn" data-op="purge" data-mb="100">Purge ~100MB</button>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- Marker -->
+    <div class="card mt-3">
+      <div class="card-header"><i class="bi bi-bookmark-star text-warning"></i> Migration Marker</div>
+      <div class="card-body">
+        <form class="row g-2 align-items-end" id="marker-form">
+          <div class="col-md-3">
+            <label class="form-label small mb-1">Marker Type</label>
+            <select class="form-select form-select-sm" id="marker-type">
+              <% markerTypes.forEach(t => { %><option value="<%= t %>"><%= t %></option><% }) %>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small mb-1">Message</label>
+            <input type="text" class="form-control form-control-sm" id="marker-message" placeholder="可选备注信息">
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-warning btn-sm w-100"><i class="bi bi-bookmark-plus"></i> 创建 Marker</button>
+          </div>
+        </form>
+        <div class="text-muted small mt-2">
+          Marker 总数 <%= formatNumber(markerStats.count) %> · Sequence 范围 <%= formatNumber(markerStats.minSequence) %> ~ <%= formatNumber(markerStats.maxSequence) %> ·
+          Batch 总数 <%= formatNumber(batchCount) %>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作结果 -->
+    <div class="card mt-3">
+      <div class="card-header"><i class="bi bi-terminal"></i> 操作结果 <span id="op-status" class="badge text-bg-secondary ms-2">idle</span></div>
+      <div class="card-body">
+        <pre id="op-result" class="mb-0 small" style="max-height: 320px; overflow: auto;">等待操作...</pre>
+      </div>
+    </div>
+
+    <!-- Migration Timeline -->
+    <div class="card mt-3">
+      <div class="card-header"><i class="bi bi-clock-history"></i> Migration Timeline（最近 30 个 Marker）</div>
+      <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+          <thead class="table-light">
+            <tr><th>Sequence</th><th>Timestamp</th><th>Marker</th><th>Batch</th><th>Env</th><th>Message</th></tr>
+          </thead>
+          <tbody id="marker-table">
+            <% markers.forEach(m => { %>
+              <tr>
+                <td class="fw-bold"><%= m.sequence_number %></td>
+                <td class="text-muted small"><%= m.created_at %></td>
+                <td><span class="badge text-bg-info"><%= m.marker_type %></span></td>
+                <td class="small"><code><%= String(m.batch_uuid).slice(0, 8) %></code></td>
+                <td><span class="badge text-bg-secondary"><%= m.source_env %></span></td>
+                <td class="small"><%= m.message %></td>
+              </tr>
+            <% }) %>
+            <% if (!markers.length) { %>
+              <tr><td colspan="6" class="text-center text-muted py-4">暂无 Marker</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 最近批次 -->
+    <div class="card mt-3">
+      <div class="card-header"><i class="bi bi-layers"></i> 最近迁移批次（Migration Batches）</div>
+      <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+          <thead class="table-light">
+            <tr><th>Batch UUID</th><th>名称</th><th>操作</th><th>目标行数</th><th>影响行数</th><th>状态</th><th>开始</th><th>完成</th></tr>
+          </thead>
+          <tbody>
+            <% batches.forEach(b => { %>
+              <tr>
+                <td class="small"><code><%= String(b.batch_uuid).slice(0, 13) %></code></td>
+                <td class="small"><%= b.batch_name %></td>
+                <td><span class="badge text-bg-dark"><%= b.operation_type %></span></td>
+                <td class="text-end"><%= Number(b.target_rows).toLocaleString('en-US') %></td>
+                <td class="text-end"><%= Number(b.affected_rows).toLocaleString('en-US') %></td>
+                <td>
+                  <% const bcls = b.status === 'COMPLETED' ? 'text-bg-success' : (b.status === 'FAILED' ? 'text-bg-danger' : (b.status === 'RUNNING' ? 'text-bg-primary' : 'text-bg-secondary')); %>
+                  <span class="badge <%= bcls %>"><%= b.status %></span>
+                </td>
+                <td class="text-muted small"><%= b.started_at %></td>
+                <td class="text-muted small"><%= b.completed_at || '-' %></td>
+              </tr>
+            <% }) %>
+            <% if (!batches.length) { %>
+              <tr><td colspan="8" class="text-center text-muted py-4">暂无批次</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <%- include('partials/footer') %>
+  <script src="/js/migration-lab.js"></script>
+</body>
+</html>

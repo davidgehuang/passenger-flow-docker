@@ -1,0 +1,63 @@
+/* Passenger Flow Management System V2 - 企业后台风格 */
+
+body {
+  background-color: #f4f6f9;
+  font-size: 0.925rem;
+}
+
+.stat-card {
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid #0d6efd;
+  border-radius: 6px;
+}
+
+.stat-card .stat-label {
+  color: #6c757d;
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+}
+
+.stat-card .stat-value {
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.stat-card .stat-sub {
+  color: #6c757d;
+  font-size: 0.78rem;
+  margin-top: 2px;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+}
+
+.card-header {
+  background-color: #fff;
+  font-weight: 600;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.navbar-brand {
+  letter-spacing: 0.5px;
+}
+
+.table > :not(caption) > * > * {
+  padding: 0.45rem 0.75rem;
+}
+
+pre#op-result,
+#health-result {
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.lab-btn:disabled {
+  opacity: 0.55;
+}

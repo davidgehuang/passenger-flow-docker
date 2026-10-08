@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body>
+  <%- include('../partials/nav') %>
+  <%- include('../partials/maintenanceBanner') %>
+
+  <div class="container py-4" style="max-width: 860px;">
+    <h4 class="mb-3"><i class="bi bi-pencil-square"></i> <%= device.device_id ? '编辑设备：'+device.device_code : '新增设备' %></h4>
+
+    <% if (error) { %>
+      <div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> <%= error %></div>
+    <% } %>
+    <% if (maintenanceMode) { %>
+      <div class="alert alert-warning">当前处于只读维护模式，提交将被拒绝。</div>
+    <% } %>
+
+    <div class="card"><div class="card-body">
+      <form method="post" action="<%= device.device_id ? '/devices/'+device.device_id : '/devices' %>">
+        <div class="row g-3">
+          <% if (!device.device_id) { %><div class="col-md-6"><label class="form-label">设备编码</label><input class="form-control" name="device_code" value="<%= device.device_code || '' %>" maxlength="64" required></div><% } %>
+          <div class="col-md-6">
+            <label class="form-label">设备名称 <span class="text-danger">*</span></label>
+            <input class="form-control" name="device_name" value="<%= device.device_name %>" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">设备类型</label>
+            <select class="form-select" name="device_type">
+              <% ['ENTRANCE_CAMERA', 'EXIT_CAMERA', 'FLOW_SENSOR', 'DEPTH_CAMERA', 'INFRARED'].forEach(t => { %>
+                <option value="<%= t %>" <%= device.device_type === t ? 'selected' : '' %>><%= t %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">状态</label>
+            <select class="form-select" name="status">
+              <% ['ONLINE', 'OFFLINE', 'WARNING', 'MAINTENANCE'].forEach(s => { %>
+                <option value="<%= s %>" <%= device.status === s ? 'selected' : '' %>><%= s %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">所属门店 <span class="text-danger">*</span></label>
+            <select class="form-select" name="store_id" required>
+              <% stores.forEach(s => { %>
+                <option value="<%= s.store_id %>" <%= device.store_id === s.store_id ? 'selected' : '' %>><%= s.store_name %>（<%= s.city %>）</option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">IP 地址</label>
+            <input class="form-control" name="ip_address" value="<%= device.ip_address %>">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">固件版本</label>
+            <input class="form-control" name="firmware_version" value="<%= device.firmware_version %>">
+          </div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+          <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> 保存</button>
+          <a href="/devices" class="btn btn-outline-secondary">返回列表</a>
+        </div>
+      </form>
+    </div></div>
+  </div>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

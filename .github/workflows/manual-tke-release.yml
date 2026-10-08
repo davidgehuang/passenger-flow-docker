@@ -1,0 +1,100 @@
+name: Manual TCR and TKE Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Immutable release tag, for example v1.0.0
+        required: true
+        type: string
+
+jobs:
+  release:
+    # Create a dedicated, trusted Linux runner with label tke-lab before enabling this workflow.
+    runs-on: [self-hosted, linux, tke-lab]
+    environment: tke-lab
+    concurrency:
+      group: passenger-flow-tke-lab
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Validate tag and configuration
+        shell: bash
+        env:
+          TAG: ${{ inputs.image_tag }}
+          REGISTRY: ${{ vars.TCR_REGISTRY }}
+          IMMUTABLE_TAGS: ${{ vars.TCR_IMMUTABLE_TAGS_CONFIRMED }}
+        run: |
+          [[ "$TAG" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$ ]]
+          test -n "$REGISTRY"
+          # Confirm tag immutability in TCR before enabling this workflow.
+          test "$IMMUTABLE_TAGS" = true
+          docker version
+          kubectl version --client
+          kubectl -n bh-lab get deployment passenger-flow
+      - name: Test
+        run: |
+          npm ci
+          npm test
+          npm run lint
+      - name: Log in to TCR
+        shell: bash
+        env:
+          REGISTRY: ${{ vars.TCR_REGISTRY }}
+          USERNAME: ${{ secrets.TCR_USERNAME }}
+          PASSWORD: ${{ secrets.TCR_PASSWORD }}
+        run: |
+          CONFIG_DIR="$(mktemp -d "$RUNNER_TEMP/passenger-docker.XXXXXX")"
+          echo "DOCKER_CONFIG=$CONFIG_DIR" >> "$GITHUB_ENV"
+          printf '%s' "$PASSWORD" | docker --config "$CONFIG_DIR" login "$REGISTRY" -u "$USERNAME" --password-stdin
+      - name: Ensure release tag is unused
+        shell: bash
+        env:
+          REGISTRY: ${{ vars.TCR_REGISTRY }}
+          TAG: ${{ inputs.image_tag }}
+        run: |
+          IMAGE="$REGISTRY/passenger-flow/passenger-flow-app:$TAG"
+          ERROR_FILE="$(mktemp "$RUNNER_TEMP/passenger-manifest.XXXXXX")"
+          trap 'rm -f "$ERROR_FILE"' EXIT
+          if docker manifest inspect "$IMAGE" >/dev/null 2>"$ERROR_FILE"; then
+            echo "Release tag already exists: $IMAGE" >&2
+            exit 1
+          fi
+          # An authentication/network failure must not be treated as an unused tag.
+          grep -Eqi 'manifest unknown|no such manifest' "$ERROR_FILE" || { echo 'Cannot confirm that the release tag is unused.' >&2; exit 1; }
+      - name: Build and push
+        shell: bash
+        env:
+          REGISTRY: ${{ vars.TCR_REGISTRY }}
+          TAG: ${{ inputs.image_tag }}
+        run: |
+          IMAGE="$REGISTRY/passenger-flow/passenger-flow-app:$TAG"
+          docker build --build-arg GIT_COMMIT="$GITHUB_SHA" -t "$IMAGE" .
+          docker push "$IMAGE"
+          DIGEST="$(docker buildx imagetools inspect "$IMAGE" --format '{{.Manifest.Digest}}')"
+          [[ "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          echo "RELEASE_IMAGE=$REGISTRY/passenger-flow/passenger-flow-app@$DIGEST" >> "$GITHUB_ENV"
+      - name: Update TKE image and wait
+        shell: bash
+        env:
+          REGISTRY: ${{ vars.TCR_REGISTRY }}
+          TAG: ${{ inputs.image_tag }}
+        run: |
+          kubectl -n bh-lab set image deployment/passenger-flow passenger-flow="$RELEASE_IMAGE"
+          kubectl -n bh-lab rollout status deployment/passenger-flow --timeout=300s
+      - name: Remove temporary registry login
+        if: always()
+        shell: bash
+        env:
+          REGISTRY: ${{ vars.TCR_REGISTRY }}
+        run: |
+          if [[ -n "${DOCKER_CONFIG:-}" && "$DOCKER_CONFIG" == "$RUNNER_TEMP"/passenger-docker.* ]]; then
+            docker logout "$REGISTRY" || true
+            rm -rf -- "$DOCKER_CONFIG"
+          fi

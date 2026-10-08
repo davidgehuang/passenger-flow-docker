@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body>
+  <%- include('partials/nav') %>
+
+  <div class="container py-5" style="max-width: 640px;">
+    <div class="card text-center <%= isDbError ? 'border-danger' : '' %>">
+      <div class="card-body py-5">
+        <% if (isDbError) { %>
+          <i class="bi bi-database-exclamation text-danger" style="font-size: 3rem;"></i>
+          <h4 class="mt-3">数据库连接失败</h4>
+          <p class="text-muted"><%= message %></p>
+          <p class="text-muted small">当前应用环境 <%- include('partials/envBadge') %> · Masked Host <code><%= maskedHost %></code></p>
+        <% } else { %>
+          <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+          <h4 class="mt-3">系统错误</h4>
+          <p class="text-muted"><%= message %></p>
+          <p class="text-muted small"><code><%= error %></code></p>
+        <% } %>
+        <a href="/" class="btn btn-outline-primary mt-2"><i class="bi bi-house"></i> 返回首页</a>
+        <a href="/health" class="btn btn-outline-secondary mt-2"><i class="bi bi-heart-pulse"></i> Health Check</a>
+      </div>
+    </div>
+  </div>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

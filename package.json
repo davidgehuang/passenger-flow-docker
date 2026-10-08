@@ -1,0 +1,53 @@
+{
+  "name": "passenger-flow-docker",
+  "version": "0.4.0",
+  "description": "Containerized Passenger Flow Management and DTS migration lab for local Docker and TKE",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "db:init": "node scripts/db-init.js",
+    "db:test": "node scripts/db-test.js",
+    "db:storage": "node scripts/db-storage-diagnose.js",
+    "db:check": "node scripts/db-check.js",
+    "db:generate": "node scripts/generate-test-data.js",
+    "dts:precheck": "node scripts/dts-precheck.js",
+    "migration:marker": "node scripts/migration-marker.js",
+    "load:continuous": "node scripts/continuous-load.js",
+    "db:snapshot": "node scripts/db-snapshot.js",
+    "db:compare": "node scripts/db-compare.js",
+    "lint": "eslint .",
+    "db:seed": "node scripts/seed.js",
+    "db:ready": "node scripts/db-ready.js",
+    "maintenance": "node scripts/maintenance.js",
+    "local:download": "node scripts/download-mysql.js",
+    "local:db": "node scripts/local-runtime.js start",
+    "test": "node scripts/run-unit-tests.js",
+    "test:integration": "node tests/integration.js",
+    "test:docker-browser": "node tests/docker-browser.js",
+    "test:docker-local": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/docker-local.ps1 -IncludeFaultTests",
+    "postinstall": "node scripts/vendor-assets.js",
+    "verify:configured": "node scripts/verify-configured.js",
+    "export:source": "node scripts/export-source.js",
+    "db:base-data": "node scripts/base-data.js",
+    "test:base-data": "node tests/base-data-integration.js"
+  },
+  "engines": {
+    "node": ">=22.2.0"
+  },
+  "dependencies": {
+    "@prometheus-io/client": "^0.16.1",
+    "bootstrap": "5.3.3",
+    "bootstrap-icons": "1.11.3",
+    "chart.js": "4.4.4",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "mysql2": "^3.11.3"
+  },
+  "devDependencies": {
+    "eslint": "^9.11.1",
+    "playwright": "1.62.1"
+  },
+  "license": "MIT"
+}
